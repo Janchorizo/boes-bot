@@ -42,8 +42,9 @@ def main(token, address, ip, port, certificate, max_connections):
     if ip is None and len(address) == 0:
         raise ValueError('Address or IP must be specified.')
     bind = ip if ip and len(ip) > 0 else address
+
     print(token, bind, port, certificate, max_connections)
-    #with admin.Webhook(token) as wb:
+    with admin.Webhook(token) as wb:
     app = init(token)
     web.run_app(app, host=bind, port=port)
 
