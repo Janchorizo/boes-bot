@@ -1,6 +1,7 @@
 '''Telegram bot implementation for BOE information retrieval.'''
 from telegram import admin
 
+import ssl
 import os
 import sys
 import json
@@ -43,53 +44,58 @@ def main(token, address, ip, port, certificate, max_connections):
         raise ValueError('Address or IP must be specified.')
     bind = ip if ip and len(ip) > 0 else address
 
-    print(token, bind, port, certificate, max_connections)
     with admin.Webhook(token, url=address, ip_address=ip, certificate=certificate, max_connections=max_connections) as wb:
         app = init(token)
-        web.run_app(app, host=bind, port=port)
+        if wb.certificate is not None:
+            cert_root = certificate[:len('.pem')]
+            ssl_ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+            ssl_ctx.load_cert_chain(cert_root+'pem', cert_root+'.key')
+            web.run_app(app, host=bind, port=port, )
+        else:    
+            web.run_app(app, host=bind, port=port)
 
 
 def getOptions(def_port, def_max_connections):
     parser = argparse.ArgumentParser()
     
     parser.add_argument(
-            '-t',
-            '--token',
-            type=str,
-            help='Bot private token.')
+        '-t',
+        '--token',
+        type=str,
+        help='Bot private token.')
 
     parser.add_argument(
-            '-a',
-            '--address',
-            type=str,
-            help='Address to listen.',
-            default='')
+        '-a',
+        '--address',
+        type=str,
+        help='Address to listen.',
+        default='')
 
     parser.add_argument(
-            '-i',
-            '--ip',
-            type=str,
-            help='Destination folder for meta-data.')
+        '-i',
+        '--ip',
+        type=str,
+        help='Destination folder for meta-data.')
 
     parser.add_argument(
-            '-p',
-            '--port',
-            type=str,
-            help='What port to listen.',
-            default=def_port)
+        '-p',
+        '--port',
+        type=str,
+        help='What port to listen.',
+        default=def_port)
 
     parser.add_argument(
-            '-c',
-            '--certificate',
-            type=str,
-            help='Destination folder for images.')
+        '-c',
+        '--certificate',
+        type=str,
+        help='Destination folder for images.')
 
     parser.add_argument(
-            '-m',
-            '--max-connections',
-            type=str,
-            help='What address to bind to.',
-            default=def_max_connections)
+        '-m',
+        '--max-connections',
+        type=str,
+        help='What address to bind to.',
+        default=def_max_connections)
 
     params = parser.parse_args()
     return (
