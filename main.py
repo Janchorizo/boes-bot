@@ -44,9 +44,9 @@ def main(token, address, ip, port, certificate, max_connections):
     bind = ip if ip and len(ip) > 0 else address
 
     print(token, bind, port, certificate, max_connections)
-    with admin.Webhook(token) as wb:
-    app = init(token)
-    web.run_app(app, host=bind, port=port)
+    with admin.Webhook(token, url=address, ip_address=ip, certificate=certificate, max_connections=max_connections) as wb:
+        app = init(token)
+        web.run_app(app, host=bind, port=port)
 
 
 def getOptions(def_port, def_max_connections):

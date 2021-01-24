@@ -1,4 +1,5 @@
 '''Higher-level functions for Telegram bot administration.'''
+import os
 import json
 import termcolor
 from . import methods
@@ -83,13 +84,12 @@ def set_webhook(
     if drop_pending_updates is not None:
         params['drop_pending_updates'] = drop_pending_updates
 
+    files = None
     if certificate is not None:
         if hasattr(certificate, 'read'):
             files = {'certificate': certificate}
         else:
             params['certificate'] = certificate
-    else:
-        files = None
         
     status, info = methods.setWebhook(
         token,
@@ -132,7 +132,7 @@ class Webhook:
             allowed_updates=None,
             drop_pending_updates=False):
         self.token = token
-        self.url = url
+        self.url = ip_address if ip_address and len(ip_address) > 0 else url
         self.certificate = certificate
         self.ip_address = ip_address
         self.max_connections = max_connections
@@ -145,24 +145,35 @@ class Webhook:
         msg_contents = [
             termcolor.colored('-> Setting webhook ', 'white', attrs=('bold',)),
             termcolor.colored(f'[{dest}]', 'white', attrs=('bold',)),
-            termcolor.colored(f'for bot {self.token}', 'cyan', attrs=('underline',)),
+            termcolor.colored(f'for bot {self.token}', 'cyan'),
         ]
         print(' '.join(msg_contents))
 
-        status, _ = set_webhook(
-            self.token,
-            self.url,
-            self.certificate,
-            self.ip_address,
-            self.max_connections,
-            self.allowed_updates,
-            self.drop_pending_updates,
-            verbose=True)
+        if self.certificate and os.path.isfile(self.certificate):
+            with open(self.certificate, 'rb') as cf:
+                status, _ = set_webhook(
+                    self.token,
+                    self.url,
+                    certificate=cf,
+                    ip_address=self.ip_address,
+                    max_connections=self.max_connections,
+                    allowed_updates=self.allowed_updates,
+                    drop_pending_updates=self.drop_pending_updates,
+                    verbose=True)
+        else:
+            status, _ = set_webhook(
+                self.token,
+                self.url,
+                ip_address=self.ip_address,
+                max_connections=self.max_connections,
+                allowed_updates=self.allowed_updates,
+                drop_pending_updates=self.drop_pending_updates,
+                verbose=True)
         self.status = status
         
         return self
     
-    def __exit__(self):
+    def __exit__(self, exc_type, exc_value, exc_traceback):
         dest = self.ip_address if len(self.ip_address) > 0 else self.url
         msg_contents = [
             termcolor.colored('-> Removing webhook ', 'white', attrs=('bold',)),
