@@ -41,7 +41,10 @@ async def handle_query(request):
 
     token = request.config_dict['token']
     update = content.Update(body)
-    print(update.content)
+    print(f'[{update.id}] {update.type.__name__} of {update.tield_name} type.')
+    print(update.content._data)
+    if hasattr(update, 'mentions'):
+        print('Update mentions @boes_bot: ', update.mentions('boes_bot'))
     if hasattr(update, 'cid'):
         messages.MessageContent(text=f'[{update.id}] ACK').send(token, update.cid ,verbose=True)
     return web.Response(text='ok')
