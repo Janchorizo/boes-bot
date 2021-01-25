@@ -3,148 +3,148 @@ import json
 from . import methods
 
 
-def kick_chat_member(token:str, chat_id:str, verbose=False):
+def kick_member(token:str, chat_id:str, verbose=False):
     '''_'''
-    params = {'chat_id': kickChatMember}
+    params = {'chat_id': chat_id}
     status, _ = methods.kickChatMember(token, params=params, verbose=verbose)
     return status
 
 
-def unban_chat_member(token:str, chat_id:str, verbose=False):
+def unban_member(token:str, chat_id:str, verbose=False):
     '''_'''
-    params = {'chat_id': unbanChatMember}
+    params = {'chat_id': chat_id}
     status, _ = methods.unbanChatMember(token, params=params, verbose=verbose)
     return status
 
 
-def restrict_chat_member(token:str, chat_id:str, verbose=False):
+def restrict_member(token:str, chat_id:str, verbose=False):
     '''_'''
-    params = {'chat_id': restrictChatMember}
+    params = {'chat_id': chat_id}
     status, _ = methods.restrictChatMember(token, params=params, verbose=verbose)
     return status
 
 
-def promote_chat_member(token:str, chat_id:str, verbose=False):
+def promote_member(token:str, chat_id:str, verbose=False):
     '''_'''
-    params = {'chat_id': promoteChatMember}
+    params = {'chat_id': chat_id}
     status, _ = methods.promoteChatMember(token, params=params, verbose=verbose)
     return status
 
 
-def set_chat_administrator_custom_title(token:str, chat_id:str, verbose=False):
+def set_administrator_custom_title(token:str, chat_id:str, verbose=False):
     '''_'''
-    params = {'chat_id': setChatAdministratorCustomTitle}
+    params = {'chat_id': chat_id}
     status, _ = methods.setChatAdministratorCustomTitle(token, params=params, verbose=verbose)
     return status
 
 
-def set_chat_permissions(token:str, chat_id:str, verbose=False):
+def set_permissions(token:str, chat_id:str, verbose=False):
     '''_'''
-    params = {'chat_id': setChatPermissions}
+    params = {'chat_id': chat_id}
     status, _ = methods.setChatPermissions(token, params=params, verbose=verbose)
     return status
 
 
-def export_chat_invite_link(token:str, chat_id:str, verbose=False):
+def export_invite_link(token:str, chat_id:str, verbose=False):
     '''_'''
-    params = {'chat_id': exportChatInviteLink}
+    params = {'chat_id': chat_id}
     status, _ = methods.exportChatInviteLink(token, params=params, verbose=verbose)
     return status
 
 
-def set_chat_photo(token:str, chat_id:str, verbose=False):
+def set_photo(token:str, chat_id:str, verbose=False):
     '''_'''
-    params = {'chat_id': setChatPhoto}
+    params = {'chat_id': chat_id}
     status, _ = methods.setChatPhoto(token, params=params, verbose=verbose)
     return status
 
 
-def delete_chat_photo(token:str, chat_id:str, verbose=False):
+def delete_photo(token:str, chat_id:str, verbose=False):
     '''_'''
-    params = {'chat_id': deleteChatPhoto}
+    params = {'chat_id': chat_id}
     status, _ = methods.deleteChatPhoto(token, params=params, verbose=verbose)
     return status
 
 
-def set_chat_title(token:str, chat_id:str, verbose=False):
+def set_title(token:str, chat_id:str, verbose=False):
     '''_'''
-    params = {'chat_id': setChatTitle}
+    params = {'chat_id': chat_id}
     status, _ = methods.setChatTitle(token, params=params, verbose=verbose)
     return status
 
 
-def set_chat_description(token:str, chat_id:str, verbose=False):
+def set_description(token:str, chat_id:str, verbose=False):
     '''_'''
-    params = {'chat_id': setChatDescription}
+    params = {'chat_id': chat_id}
     status, _ = methods.setChatDescription(token, params=params, verbose=verbose)
     return status
 
 
-def pin_chat_message(token:str, chat_id:str, verbose=False):
+def pin_message(token:str, chat_id:str, verbose=False):
     '''_'''
-    params = {'chat_id': pinChatMessage}
+    params = {'chat_id': chat_id}
     status, _ = methods.pinChatMessage(token, params=params, verbose=verbose)
     return status
 
 
-def unpin_chat_message(token:str, chat_id:str, verbose=False):
+def unpin_message(token:str, chat_id:str, verbose=False):
     '''_'''
-    params = {'chat_id': unpinChatMessage}
+    params = {'chat_id': chat_id}
     status, _ = methods.unpinChatMessage(token, params=params, verbose=verbose)
     return status
 
 
-def unpin_all_chat_messages(token:str, chat_id:str, verbose=False):
+def unpin_all_messages(token:str, chat_id:str, verbose=False):
     '''_'''
-    params = {'chat_id': unpinAllChatMessages}
+    params = {'chat_id': chat_id}
     status, _ = methods.unpinAllChatMessages(token, params=params, verbose=verbose)
     return status
 
 
-def leave_chat(token:str, chat_id:str, verbose=False):
+def leave(token:str, chat_id:str, verbose=False):
     '''_'''
-    params = {'chat_id': leaveChat}
+    params = {'chat_id': chat_id}
     status, _ = methods.leaveChat(token, params=params, verbose=verbose)
     return status
 
 
-def get_chat(token:str, chat_id:str, verbose=False):
+def get(token:str, chat_id:str, verbose=False):
     '''_'''
-    params = {'chat_id': getChat}
+    params = {'chat_id': chat_id}
     status, _ = methods.getChat(token, params=params, verbose=verbose)
     return status
 
 
-def get_chat_administrators(token:str, chat_id:str, verbose=False):
+def get_administrators(token:str, chat_id:str, verbose=False):
     '''_'''
-    params = {'chat_id': getChatAdministrators}
+    params = {'chat_id': chat_id}
     status, _ = methods.getChatAdministrators(token, params=params, verbose=verbose)
     return status
 
 
-def get_chat_members_count(token:str, chat_id:str, verbose=False):
+def get_members_count(token:str, chat_id:str, verbose=False):
     '''_'''
-    params = {'chat_id': getChatMembersCount}
+    params = {'chat_id': chat_id}
     status, _ = methods.getChatMembersCount(token, params=params, verbose=verbose)
     return status
 
 
-def get_chat_member(token:str, chat_id:str, verbose=False):
+def get_member(token:str, chat_id:str, verbose=False):
     '''_'''
-    params = {'chat_id': getChatMember}
+    params = {'chat_id': chat_id}
     status, _ = methods.getChatMember(token, params=params, verbose=verbose)
     return status
 
 
-def set_chat_sticker_set(token:str, chat_id:str, verbose=False):
+def set_sticker_set(token:str, chat_id:str, verbose=False):
     '''_'''
-    params = {'chat_id': setChatStickerSet}
+    params = {'chat_id': chat_id}
     status, _ = methods.setChatStickerSet(token, params=params, verbose=verbose)
     return status
 
 
-def delete_chat_sticker_set(token:str, chat_id:str, verbose=False):
+def delete_sticker_set(token:str, chat_id:str, verbose=False):
     '''_'''
-    params = {'chat_id': deleteChatStickerSet}
+    params = {'chat_id': chat_id}
     status, _ = methods.deleteChatStickerSet(token, params=params, verbose=verbose)
     return status
