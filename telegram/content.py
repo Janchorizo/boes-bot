@@ -31,3 +31,18 @@ def get_updates(token:str, verbose=False):
     '''Returns a list of bot updates.'''
     status, updates = methods.getUpdates(token, verbose=verbose)
     return status, updates
+
+
+class Update:
+    def __init__(self, update_dict):
+        if len(update_dict) != 2:
+            raise ValueError('An update dict must only consist of "update_id" and an optional parameter.')
+        self.id = update_dict['update_id']
+        self.type = [k for k in update_dict.keys() if k != 'update_id'][0]
+        self.content = update_dict[self.type]
+        
+        if self.type in {'message', 'edited_message', 'channel_post', 'edited_channel_post'}:
+            self.cid = self.content['chat']['id']
+        elif self.type == 'callback_query':
+            self.cid = self.content['message']['chat']['id']
+
