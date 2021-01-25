@@ -91,6 +91,7 @@ def set_webhook(
         else:
             params['certificate'] = certificate
         
+    print(params)
     status, info = methods.setWebhook(
         token,
         params=params,
@@ -132,7 +133,7 @@ class Webhook:
             allowed_updates=None,
             drop_pending_updates=False):
         self.token = token
-        self.url = ip_address if ip_address and len(ip_address) > 0 else url
+        self.url = ip_address if ip_address is not None and len(ip_address) > 0 else url
         self.certificate = certificate
         self.ip_address = ip_address
         self.max_connections = max_connections
@@ -141,7 +142,7 @@ class Webhook:
         self.status = None
     
     def __enter__(self):
-        dest = self.ip_address if len(self.ip_address) > 0 else self.url
+        dest = self.ip_address if self.ip_address and len(self.ip_address) > 0 else self.url
         msg_contents = [
             termcolor.colored('-> Setting webhook ', 'white', attrs=('bold',)),
             termcolor.colored(f'[{dest}]', 'white', attrs=('bold',)),
@@ -174,7 +175,7 @@ class Webhook:
         return self
     
     def __exit__(self, exc_type, exc_value, exc_traceback):
-        dest = self.ip_address if len(self.ip_address) > 0 else self.url
+        dest = self.ip_address if self.ip_address and len(self.ip_address) > 0 else self.url
         msg_contents = [
             termcolor.colored('-> Removing webhook ', 'white', attrs=('bold',)),
             termcolor.colored(f'[{dest}]', 'white', attrs=('bold',)),
