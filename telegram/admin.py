@@ -113,12 +113,6 @@ def remove_webhook(token:str, drop_pending_updates=False, verbose=False):
     return status, info 
 
 
-def get_updates(token:str, verbose=False):
-    '''Returns a list of bot updates.'''
-    status, updates = methods.getUpdates(token, verbose=verbose)
-    return status, updates
-
-
 class Webhook:
     '''Provides setup and taredown of the bot webhook as
     a context manager.
