@@ -237,7 +237,6 @@ class MediaReplacementContent(ReplacementContent):
 class MarkupReplacementContent(ReplacementContent):
     method = methods.editMessageReplyMarkup
 
-
 #forward_message
 #copy_message
 #startPoll
