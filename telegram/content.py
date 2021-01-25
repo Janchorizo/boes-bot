@@ -33,16 +33,34 @@ def get_updates(token:str, verbose=False):
     return status, updates
 
 
+field_to_content_type = {
+    'message': types.Message,
+    'edited_message': types.Message,
+    'channel_post': types.Message,
+    'edited_channel_post': types.Message,
+    'inline_query': types.InlineQuery,
+    'chosen_inline_result': types.ChosenInlineResult,
+    'callback_query': types.CallbackQuery,
+    'shipping_query': types.ShippingQuery,
+    'pre_checkout_query': types.PreCheckoutQuery,
+    'poll': types.Poll,
+    'poll_answer': types.PollAnswer
+}
+
+
 class Update:
     def __init__(self, update_dict):
         if len(update_dict) != 2:
             raise ValueError('An update dict must only consist of "update_id" and an optional parameter.')
         self.id = update_dict['update_id']
-        self.type = [k for k in update_dict.keys() if k != 'update_id'][0]
-        self.content = update_dict[self.type]
-        
-        if self.type in {'message', 'edited_message', 'channel_post', 'edited_channel_post'}:
-            self.cid = self.content['chat']['id']
-        elif self.type == 'callback_query':
-            self.cid = self.content['message']['chat']['id']
+        self.field_name = [k for k in update_dict.keys() if k != 'update_id'][0]
+        self.type = field_to_content_type[self.field_name]
+        self.content = type(update_dict[self.type])
 
+    @classmethod
+    def fromstring(cls, jsonstring):
+        return cls(json.loads(jsonstring))
+
+    @classmethod
+    def fromraw(cls, rawstring):
+        return self.__class__.fromstring(rawstring.decode())
