@@ -1,61 +1,80 @@
 '''Telegram bot implementation for BOE information retrieval.'''
-from telegram import admin
-
+import argparse
+import asyncio
+import json
 import ssl
 import os
-import sys
-import json
-import argparse
-import functools
-import time
-import asyncio
+
 from aiohttp import web
 
+from telegram import admin
+from telegram import content
+from telegram import messages
 
-DEFAUT_MAX_CONNECTIONS = 2
+
+MAX_CONNECTIONS = 10
 DEFAULT_PORT = 80
 
 
+async def get_body_dict(request):
+    if request.body_exists and request.can_read_body:
+        raw_body = b''
+        async for line in request.content:
+            raw_body += line
+        try:
+            d = json.loads(raw_body.decode())
+        except Exception:
+            return None
+        else:
+            return d
+    else:
+        return None
+
+
 async def handle_query(request):
-    print(request)
-    res = web.json_response({'ok': True})
-    if res == None:
+    print(f'<- {request.host}')
+    body = await get_body_dict(request)
+
+    if body is None:
         print('{!r} [ERROR]'.format(request))
         raise web.HTTPNotFound()
 
-    print('{!r} [OK]'.format(request))
-    return res
+    token = request.config_dict['token']
+    update = content.Update(body)
+    print(update.content)
+    if hasattr(update, 'cid'):
+        messages.MessageContent(text=f'[{update.id}] ACK').send(token, update.cid ,verbose=True)
+    return web.Response(text='ok')
+    
+
+async def healthy(request):
+    return web.json_response({'healty': True})
 
 
 def init(token):
     app = web.Application()
     app.add_routes([
-        web.get('/', handle_query),
-        web.post('/', handle_query)])
+        web.get('/healthy', healthy),
+        web.post(f'/{token}', handle_query)])
+    app['token'] = token
     return app
 
 
-def main(token, address, ip, port, certificate, max_connections):
+def main(token, address, port, pubkey, privkey, **kwargs):
     if token is None or len(token) == 0:
         raise ValueError('A valid Telegram bot token must be specified.')
-    if ip is not None and len(address) > 0:
-        raise ValueError('Only address or fixed IP can be specified.')
-    if ip is None and len(address) == 0:
-        raise ValueError('Address or IP must be specified.')
-    bind = ip if ip and len(ip) > 0 else address
+    if len(address) == 0:
+        raise ValueError('Address must be specified.')
 
-    with admin.Webhook(token, url=address, ip_address=ip, certificate=certificate, max_connections=max_connections) as wb:
+    with admin.Webhook(token, url=f'https://{address}:{port}/{token}', max_connections=MAX_CONNECTIONS,
+            drop_pending_updates=True) as wb:
         app = init(token)
-        if wb.certificate is not None:
-            cert_root = certificate[:len('.pem')]
-            ssl_ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
-            ssl_ctx.load_cert_chain(cert_root+'pem', cert_root+'.key')
-            web.run_app(app, host=bind, port=port, )
-        else:    
-            web.run_app(app, host=bind, port=port)
+        ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        ssl_ctx.load_cert_chain(pubkey, privkey)
+        web.run_app(app, port=port, ssl_context=ssl_ctx)
 
 
-def getOptions(def_port, def_max_connections):
+def getOptions(def_port):
     parser = argparse.ArgumentParser()
     
     parser.add_argument(
@@ -72,12 +91,6 @@ def getOptions(def_port, def_max_connections):
         default='')
 
     parser.add_argument(
-        '-i',
-        '--ip',
-        type=str,
-        help='Destination folder for meta-data.')
-
-    parser.add_argument(
         '-p',
         '--port',
         type=str,
@@ -85,30 +98,26 @@ def getOptions(def_port, def_max_connections):
         default=def_port)
 
     parser.add_argument(
-        '-c',
-        '--certificate',
+        '--pubkey',
         type=str,
-        help='Destination folder for images.')
+        help='Public key')
 
     parser.add_argument(
-        '-m',
-        '--max-connections',
+        '--privkey',
         type=str,
-        help='What address to bind to.',
-        default=def_max_connections)
+        help='Private key')
 
     params = parser.parse_args()
-    return (
-        params.token,
-        params.address,
-        params.ip,
-        params.port,
-        params.certificate,
-        params.max_connections)
+    return {
+        'token': params.token,
+        'address': params.address,
+        'port': params.port,
+        'pubkey': params.pubkey,
+        'privkey': params.privkey,
+    }
 
 
 if __name__ == '__main__':
-    token, address, ip, port, certificate, max_connections = getOptions(
-        DEFAULT_PORT,
-        DEFAUT_MAX_CONNECTIONS)
-    main(token, address, ip, port, certificate, max_connections)
+    params = getOptions(DEFAULT_PORT)
+    main(**params)
+
