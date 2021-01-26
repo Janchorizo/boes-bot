@@ -1,6 +1,7 @@
 '''Higher-level functions for Telegram bot messaging.'''
 import json
 from . import methods
+from . import types
 
 
 def get_user_profile_photos(
@@ -55,7 +56,7 @@ class Update:
         self.id = update_dict['update_id']
         self.field_name = [k for k in update_dict.keys() if k != 'update_id'][0]
         self.type = field_to_content_type[self.field_name]
-        self.content = type(update_dict[self.type])
+        self.content = self.type(update_dict[self.field_name])
 
     @classmethod
     def fromstring(cls, jsonstring):
@@ -64,3 +65,4 @@ class Update:
     @classmethod
     def fromraw(cls, rawstring):
         return self.__class__.fromstring(rawstring.decode())
+
