@@ -11,6 +11,7 @@ from telegram import admin
 from telegram import content
 from telegram import types
 from telegram import messages
+from handlers import handlers
 
 
 MAX_CONNECTIONS = 10
@@ -31,55 +32,6 @@ async def get_body_dict(request):
     else:
         return None
 
-global_options_text = '''
-@boes\_bot te permite seguir la actividad del gobierno de forma sencilla\\.
-
-Todos los días se procesan las leyes publicadas en el BOE el día anterior
-y se proporcionan como resúmenes sencillos\\. También puedes ver resúmenes
-semanales y _perlas que aparecen en el BOE_ y que te pueden resultar interesantes\\.
-
-Puedes votar cada paquete dirario de leyes y ver resultados pasados\\. Como
-ciudadano estás en tu derecho de conocer y opinar sobre las leyes que se
-crean\\.
-
-Para más información visita [https://boesbot\\.jancho\\.es](https://boes\\.jancho\\.es)
-'''
-
-global_options = json.dumps({'inline_keyboard': [
-    [{'text': 'Ayer en el BOE', 'callback_data': 'ayer'}],
-    [{'text': 'Resumen semanal', 'callback_data': 'semanal'}],
-    [{'text': 'Perlas en el BOE', 'callback_data': 'perlas'}],
-    [{'text': 'Cuestionarios', 'callback_data': 'cuestionarios'}],
-    ]})
-
-class MentionHandler:
-    msg = messages.MessageContent(text=global_options_text, parse_mode='MarkdownV2', reply_markup=global_options)
-
-    def handles(self, update):
-        if update.type != types.Message:
-            return False
-        if hasattr(update.content, 'mentions') and update.content.mentions('@boes_bot'):
-            return True
-    
-    def __call__(self, update, token):
-        self.msg.send(token, update.content.cid, verbose=True)
-
-
-class DefaultHandler:
-    def handles(self, update):
-        if hasattr(update.content, 'cid'):
-            return True
-    
-    def __call__(self, update, token):
-        msg = messages.MessageContent(text=f'[{update.id}] Received a *{update.field_name}*', parse_mode='MarkdownV2')
-        msg.send(token, update.content.cid, verbose=True)
-
-
-handlers = [
-    MentionHandler(),
-    DefaultHandler()
-]
-
 
 async def handle_query(request):
     print(f'<- {request.host}')
@@ -89,6 +41,7 @@ async def handle_query(request):
         print('{!r} [ERROR]'.format(request))
         raise web.HTTPNotFound()
 
+    print(body)
     token = request.config_dict['token']
     update = content.Update(body)
     for handler in handlers:
