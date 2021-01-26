@@ -1,45 +1,46 @@
 '''Content types.'''
+from collections import UserDict
 
-class Content:
+
+class Message(UserDict):
     def __init__(self, data):
-        self._data = data
-    
-    def __getitem__(self, key):
-        if key not in self._data:
-            raise KeyError()
-        else:
-            return self._data[key]
-    
-    def __setitem__(self, key, value):
-        raise KeyError(f"Can't set value for {key}")
+        super().__init__(data)
+        self.cid = self.data['chat']['id']
 
-class Message(Content):
-    def __init__(self, data):
-        super().__init__(self, data)
-        self.cid = self._data['chat']['id']
+    def mentions(self, entity_id):
+        if 'entities' not in self:
+            return False
 
-    def mentions(self, id):
-        mentioned_entities = (
-            self._data['text'].slice(e['offset'], e['length'])
-            for e in self._data['entities']
+        mentioned_entities = tuple(
+            self['text'][e['offset']: e['offset'] + e['length']]
+            for e in self['entities']
             if e['type'] == 'mention'
         )
 
-        return any(map(lambda mention: mention == id, mentioned_entities))
+        print(mentioned_entities)
 
-class InlineQuery(Content):
+        return any(map(lambda mention: mention == entity_id, mentioned_entities))
 
-class ChosenInlineResult(Content):
+class InlineQuery(UserDict):
+    pass
 
-class CallbackQuery(Content):
+class ChosenInlineResult(UserDict):
+    pass
+
+class CallbackQuery(UserDict):
     def __init__(self, data):
-        super().__init__(self, data)
-        self.cid = self._data['message']['chat']['id']
+        super().__init__(data)
+        self.cid = self.data['message']['chat']['id']
 
-class ShippingQuery(Content):
+class ShippingQuery(UserDict):
+    pass
 
-class PreCheckoutQuery(Content):
+class PreCheckoutQuery(UserDict):
+    pass
 
-class Poll(Content):
+class Poll(UserDict):
+    pass
 
-class PollAnswer(Content):
+class PollAnswer(UserDict):
+    pass
+
