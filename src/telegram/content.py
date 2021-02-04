@@ -28,12 +28,6 @@ def getFile(token:str, file_id:str, verbose=False):
     return status, file
 
 
-def get_updates(token:str, verbose=False):
-    '''Returns a list of bot updates.'''
-    status, updates = methods.getUpdates(token, verbose=verbose)
-    return status, updates
-
-
 field_to_content_type = {
     'message': types.Message,
     'edited_message': types.Message,
@@ -66,3 +60,21 @@ class Update:
     def fromraw(cls, rawstring):
         return self.__class__.fromstring(rawstring.decode())
 
+
+def get_updates(token:str, offset=None, verbose=False):
+    '''Returns a list of bot updates.'''
+    if offset:
+        q_params = {'offset': offset}
+        status, content = methods.getUpdates(
+            token,
+            query_params=q_params,
+            verbose=verbose)
+    else:
+        status, content = methods.getUpdates(token, verbose=verbose)
+
+    if status == 200 and len(content['result']) > 0:
+        updates = [Update(x) for x in content['result']]
+    else:
+        updates = []
+
+    return status, updates
