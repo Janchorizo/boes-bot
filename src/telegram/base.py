@@ -71,7 +71,7 @@ class Method:
     default = tuple()
     optional = tuple()
 
-    def __call__(self, token, *, params=None, files=None, verbose=False):
+    def __call__(self, token, *, params=None, query_params=None, files=None, verbose=False):
         endpoint = get_api_endpoint(self.method, token)
         if verbose:
             log_request(self.method, endpoint)
@@ -84,13 +84,21 @@ class Method:
         request = functools.partial(request, endpoint)
         if params is not None:
             request = functools.partial(request, data=params)
+        if query_params is not None:
+            request = functools.partial(request, params=query_params)
         if files is not None:
             request = functools.partial(request, files=files)
         r = request()
 
         if verbose:
             log_response(self.method, r)
-        return r.status_code, r.content
+
+        try:
+            content = json.loads(r.content.decode())
+        except Exception:
+            content = None
+
+        return r.status_code, content
 
     def __repr__(self):
         msg = '{}(token, params={{ {}{} }}, verbose=False)'
