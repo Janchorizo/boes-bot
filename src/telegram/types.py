@@ -17,8 +17,6 @@ class Message(UserDict):
             if e['type'] == 'mention'
         )
 
-        print(mentioned_entities)
-
         return any(map(lambda mention: mention == entity_id, mentioned_entities))
 
 class InlineQuery(UserDict):
