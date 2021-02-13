@@ -5,7 +5,6 @@ from telegram import messages
 from telegram import types
 from telegram import methods
 
-
 class YesterdayHandler:
     def handles(self, update):
         if update.type != types.CallbackQuery:
@@ -68,13 +67,36 @@ class DefaultHandler:
             return True
     
     def __call__(self, update, token):
-        msg = messages.MessageContent(text=f'[{update.id}] Received a \\< {update.field_name} \\>', parse_mode='MarkdownV2')
-        msg.send(token, update.content.cid, verbose=True)
+        with open('static/header.png', 'rb') as p:
+            start_msg = messages.PhotoContent(
+                photo=p,
+                parse_mode='MarkdownV2',
+                caption=
+'''@boes\\_bot recopila las entradas del [BOE](https://boe\\.es) para que puedas:
+
+ ❉ Ver resúmenes gráficos diarios del BOE\\.
+ ❉ Explorar interactivamente las secciones y departamentos\\.
+ ❉ Buscar entradas por texto\\.
+
+*¿Cómo usar el bot?*
+Puedes usar las opciones del menú:
+➥ Escribe @boes\\_bot ó /menu para ver las opciones\\.
+
+O ejecutar los comandos correspondientes:
+➥ El comando /ultimo muestra el último BOE\\.
+➥ El comando /otro\\_día permite elegir el BOE de otro día\\.
+➥ Usa el comando /buscar buscar en el BOE\\.
+
+Si el chat se te hace pequeño, prueba la [applicación web](boesbot\\.jancho\\.es)\\.
+
+Si quieres apoyar el proyecto puedes [pagarme un café en BuyMeACoffee](https://www\\.buymeacoffee\\.com/janchorizo)\\.
+
+Para ver otra vez este mensaje usa el comando /help\\.
+''')
+            start_msg.send(token, update.content.cid, verbose=True)
 
 
 handlers = [
-    YesterdayHandler(),
-    MentionHandler(),
     DefaultHandler()
 ]
 
