@@ -73,28 +73,23 @@ class HelpHandler:
             start_msg = messages.PhotoContent(
                 photo=p,
                 parse_mode='MarkdownV2',
-                caption=
-'''@boes\\_bot recopila las entradas del [BOE](https://boe\\.es) para que puedas:
-
- ❉ Ver resúmenes gráficos diarios del BOE\\.
- ❉ Explorar interactivamente las secciones y departamentos\\.
- ❉ Buscar entradas por texto\\.
-
-*¿Cómo usar el bot?*
-Puedes usar las opciones del menú:
-➥ Escribe @boes\\_bot ó /menu para ver las opciones\\.
-
-O ejecutar los comandos correspondientes:
-➥ El comando /ultimo muestra el último BOE\\.
-➥ El comando /otro\\_dia permite elegir el BOE de otro día\\.
-➥ Usa el comando /buscar buscar en el BOE\\.
-
-Si el chat se te hace pequeño, prueba la [applicación web](boesbot\\.jancho\\.es)\\.
-
-Si quieres apoyar el proyecto puedes [pagarme un café en BuyMeACoffee](https://www\\.buymeacoffee\\.com/janchorizo)\\.
-
-Para ver otra vez este mensaje usa el comando /help\\.
-''')
+                caption=(
+                '@boes\\_bot recopila las entradas del [BOE](https://boe\\.es) para que puedas:\n\n'
+                ' ❉ Ver resúmenes gráficos diarios del BOE\\.\n'
+                ' ❉ Explorar interactivamente las secciones y departamentos\\.\n'
+                ' ❉ Buscar entradas por texto\\.\n\n'
+                '*¿Cómo usar el bot?*\n'
+                'Puedes usar las opciones del menú:\n'
+                ' ➥ Escribe @boes\\_bot ó /menu para ver las opciones\\.\n\n'
+                'O ejecutar los comandos correspondientes:\n'
+                ' ➥ El comando /ultimo muestra el último BOE\\.\n'
+                ' ➥ El comando /otro\\_dia permite elegir el BOE de otro día\\.\n'
+                ' ➥ Usa el comando /buscar buscar en el BOE\\.\n\n'
+                'Si el chat se te hace pequeño, prueba la [applicación web](boesbot\\.jancho\\.es)\\.\n\n'
+                'Si quieres apoyar el proyecto puedes '
+                '[pagarme un café en BuyMeACoffee](https://www\\.buymeacoffee\\.com/janchorizo)\\.\n\n'
+                'Para ver otra vez este mensaje usa el comando /help\\.'
+                ))
             start_msg.send(token, update.content.cid, verbose=True)
 
 
