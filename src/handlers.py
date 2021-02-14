@@ -107,21 +107,20 @@ class DayInputHandler:
         msg.apply(token, update.content.cid, verbose=True)
 
 
-class SearchButtonHandler:
+class SearchHandler:
     def handles(self, update):
-        if update.type != types.CallbackQuery:
+        if update.type != types.Message:
             return False
-        if update.content['data'].startswith(self.__class__.__name__):
+        if update.content.is_command('/buscar'):
             return True
         return False
 
     def __call__(self, update, token):
-        msg = messages.CaptionReplacementContent(
-            message_id=update.content['message']['message_id'],
-            caption='[TODO] ' + self.__class__.__name__,
-            parse_mode='MarkdownV2',
-            reply_markup='')
-        msg.apply(token, update.content.cid, verbose=True)
+        search_string = update.content["text"].split('/buscar')[1].strip()
+        msg = messages.MessageContent(
+            text=f'_Buscando_ {search_string} \\. \\. \\.',
+            parse_mode='MarkdownV2')
+        msg.send(token, update.content.cid, verbose=True)
 
 
 class SuscriptionHandler:
@@ -188,7 +187,7 @@ menu_text = (
 menu_options = json.dumps({'inline_keyboard': [
     [{'text': 'Ver el último BOE', 'callback_data': DayHandler.__name__}],
     [{'text': 'Ver otro día', 'callback_data': DayInputHandler.__name__}],
-    [{'text': 'Buscar en el BOE', 'callback_data': SearchButtonHandler.__name__}],
+    [{'text': 'Buscar en el BOE', 'switch_inline_query_current_chat': '/buscar '}],
     [{'text': 'Suscribirse al BOE', 'callback_data': SuscriptionHandler.__name__}],
     ]})
 
@@ -211,11 +210,11 @@ class MenuHandler:
 
 
 handlers = [
-    MenuHandler(),
     DayHandler(),
     DayInputHandler(),
-    SearchButtonHandler(),
+    SearchHandler(),
     SuscriptionHandler(),
+    MenuHandler(),
     HelpHandler(),
 ]
 
