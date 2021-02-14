@@ -73,13 +73,15 @@ class DayInputHandler:
 
         if field_count == 1: # select the month
             months = tuple(range(1,13))
+            arranged_months = [months[i*3:i*3+3] for i in range(len(months)//3)]
             caption = (f'Selecciona el mes de *{year}* que quieres consultar\\.\n'
                         '_También puedes volver atrás para cambiar de año_\\.')
             options = json.dumps({'inline_keyboard': [
-                [{
+                *[[{
                     'text': calendar.month_name[m].capitalize(),
                     'callback_data': f'{DayInputHandler.__name__}:{year}:{m}'
-                  } for m in months],
+                  } for m in row]
+                for row in arranged_months],
                 [{'text': 'Atrás', 'callback_data': DayInputHandler.__name__}]
             ]})
             
