@@ -16,7 +16,7 @@ class ParameterGroup:
     def __init__(self, *args, **kwargs):
         required = set(self.method.required) - {'chat_id'}
         supported = required | set(self.method.optional)
-        missing_required = all(k not in kwargs for k in required)
+        missing_required = any(k not in kwargs for k in required)
     
         if missing_required:
             msg = 'Too few arguments. At least {} should be provided.'
