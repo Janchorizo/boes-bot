@@ -19,6 +19,18 @@ class Message(UserDict):
 
         return any(map(lambda mention: mention == entity_id, mentioned_entities))
 
+    def is_command(self, command):
+        if 'entities' not in self:
+            return False
+
+        commands = tuple(
+            self['text'][e['offset']: e['offset'] + e['length']]
+            for e in self['entities']
+            if e['type'] == 'bot_command'
+        )
+
+        return len(commands) == 1 and commands[0] == command
+
 class InlineQuery(UserDict):
     pass
 
