@@ -1,9 +1,14 @@
 '''Update handlers for boes_bot.'''
+import datetime, calendar
+import locale
 import json
 
 from telegram import messages
 from telegram import types
 from telegram import methods
+
+
+locale.setlocale(locale.LC_ALL,"es_ES.UTF-8")
 
 
 class DayHandler:
@@ -17,10 +22,31 @@ class DayHandler:
     def __call__(self, update, token):
         msg = messages.CaptionReplacementContent(
             message_id=update.content['message']['message_id'],
-            caption='[TODO] ' + self.__class__.__name__,
+            caption='[TODO] ' + update.content['data'],
             parse_mode='MarkdownV2',
             reply_markup='')
         msg.apply(token, update.content.cid, verbose=True)
+
+
+def get_arranged_buttons(year, month, fmt, fallback):
+    c = calendar.TextCalendar()
+    f_width = 3
+    weeks = c.formatmonth(year, month, w=f_width).split('\n')[2:-1] # remove headers
+    arranged_days = [
+        [week[i*(f_width+1):i*(f_width+1)+(f_width+1)].strip() for i in range(7)]
+        for week
+        in weeks
+    ]
+    arranged_buttons = [
+        [
+            fallback if day == '' else {'text': day, 'callback_data': fmt.format(year, month, day)}
+            for day
+            in week
+        ]
+        for week
+        in arranged_days
+    ]
+    return arranged_buttons
 
 
 class DayInputHandler:
@@ -32,11 +58,50 @@ class DayInputHandler:
         return False
 
     def __call__(self, update, token):
+        fields = update.content['data'].split(':')
+        field_count = len(fields) - 1
+        year = None if field_count == 0 else int(fields[1])
+        month = None if field_count < 2 else int(fields[2])
+
+        if field_count == 0: # select a year
+            years = (2021,)
+            caption = 'Selecciona el año que quieres consultar\\.'
+            options = json.dumps({'inline_keyboard': [
+                [{'text': y, 'callback_data': f'{DayInputHandler.__name__}:{y}'}
+                    for y in years]
+            ]})
+
+        if field_count == 1: # select the month
+            months = tuple(range(1,13))
+            caption = (f'Selecciona el mes de *{year}* que quieres consultar\\.\n'
+                        '_También puedes volver atrás para cambiar de año_\\.')
+            options = json.dumps({'inline_keyboard': [
+                [{
+                    'text': calendar.month_name[m].capitalize(),
+                    'callback_data': f'{DayInputHandler.__name__}:{year}:{m}'
+                  } for m in months],
+                [{'text': 'Atrás', 'callback_data': DayInputHandler.__name__}]
+            ]})
+            
+
+        if field_count == 2: # select the day
+            fmt = DayHandler.__name__+':{}:{}:{}'
+            fallback = {'text': ' ', 'callback_data': f'{DayInputHandler.__name__}:{year}:{month}'}
+            
+            caption = (f'Selecciona el día de *{calendar.month_name[month].capitalize()}*, *{year}*'
+                        ' que quieres consultar\\.\n'
+                        '_También puedes volver atrás para cambiar de mes_\\.')
+            
+            buttons = get_arranged_buttons(year, month, fmt, fallback)
+            buttons.append([{'text': 'Atrás', 'callback_data': f'{DayInputHandler.__name__}:{year}'}])
+            options = json.dumps({'inline_keyboard': buttons})
+            
+        
         msg = messages.CaptionReplacementContent(
-            message_id=update.content['message']['message_id'],
-            caption='[TODO] ' + self.__class__.__name__,
-            parse_mode='MarkdownV2',
-            reply_markup='')
+                message_id=update.content['message']['message_id'],
+                caption=caption,
+                parse_mode='MarkdownV2',
+                reply_markup=options)
         msg.apply(token, update.content.cid, verbose=True)
 
 
