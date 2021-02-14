@@ -61,10 +61,12 @@ class MentionHandler:
         self.msg.send(token, update.content.cid, verbose=True)
 
 
-class DefaultHandler:
+class HelpHandler:
     def handles(self, update):
-        if hasattr(update.content, 'cid'):
-            return True
+        if update.type == types.Message:
+            if update.content.is_command('/help') or update.content.is_command('/start'):
+                return True
+        return False
     
     def __call__(self, update, token):
         with open('static/header.png', 'rb') as p:
@@ -84,7 +86,7 @@ Puedes usar las opciones del menú:
 
 O ejecutar los comandos correspondientes:
 ➥ El comando /ultimo muestra el último BOE\\.
-➥ El comando /otro\\_día permite elegir el BOE de otro día\\.
+➥ El comando /otro\\_dia permite elegir el BOE de otro día\\.
 ➥ Usa el comando /buscar buscar en el BOE\\.
 
 Si el chat se te hace pequeño, prueba la [applicación web](boesbot\\.jancho\\.es)\\.
@@ -96,7 +98,17 @@ Para ver otra vez este mensaje usa el comando /help\\.
             start_msg.send(token, update.content.cid, verbose=True)
 
 
+class DefaultHandler:
+    def handles(self, update):
+        if hasattr(update.content, 'cid'):
+            return True
+    
+    def __call__(self, update, token):
+        pass
+
+
 handlers = [
+    HelpHandler(),
     DefaultHandler()
 ]
 
