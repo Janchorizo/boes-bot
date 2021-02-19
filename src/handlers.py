@@ -1,4 +1,5 @@
 '''Update handlers for boes_bot.'''
+import os
 import datetime, calendar
 import locale
 import json
@@ -9,6 +10,9 @@ from telegram import methods
 
 
 locale.setlocale(locale.LC_ALL,"es_ES.UTF-8")
+
+
+basedir = os.path.dirname(os.path.abspath(__file__))
 
 
 class DayHandler:
@@ -179,7 +183,7 @@ class HelpHandler:
         return False
     
     def __call__(self, update, token):
-        with open('static/header.png', 'rb') as p:
+        with open(os.path.join(basedir, 'static/header.png'), 'rb') as p:
             start_msg = messages.PhotoContent(
                 photo=p,
                 parse_mode='MarkdownV2',
@@ -212,7 +216,7 @@ class MenuHandler:
         return False
     
     def __call__(self, update, token):
-        with open('static/header.png', 'rb') as p:
+        with open(os.path.join(basedir, 'static/header.png'), 'rb') as p:
             start_msg = messages.PhotoContent(
                 photo=p,
                 parse_mode='MarkdownV2',
