@@ -70,7 +70,7 @@ def main(token, address, port, pubkey, privkey, **kwargs):
     if len(address) == 0:
         raise ValueError('Address must be specified.')
 
-    with admin.Webhook(token, url=f'http://{address}/{token}', max_connections=MAX_CONNECTIONS,
+    with admin.Webhook(token, url=f'https://{address}/{token}', max_connections=MAX_CONNECTIONS,
             drop_pending_updates=True) as wb:
         app = init(token)
         web.run_app(app, port=port)
