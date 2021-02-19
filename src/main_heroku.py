@@ -41,11 +41,11 @@ async def handle_query(request):
         print('{!r} [ERROR]'.format(request))
         raise web.HTTPNotFound()
 
-    print(body)
     token = request.config_dict['token']
     update = content.Update(body)
     for handler in handlers:
         if handler.handles(update):
+            print(f'Request handled by {handler.__class__.__name__}')
             handler(update, token)
             break
     return web.Response(text='ok')
