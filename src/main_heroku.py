@@ -24,7 +24,7 @@ async def get_body_dict(request):
         async for line in request.content:
             raw_body += line
         try:
-            d = json.loads(raw_body.decode())
+            d = json.loads(raw_body.decode('utf8'))
         except Exception:
             return None
         else:

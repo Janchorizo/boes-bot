@@ -58,7 +58,7 @@ class Update:
 
     @classmethod
     def fromraw(cls, rawstring):
-        return self.__class__.fromstring(rawstring.decode())
+        return self.__class__.fromstring(rawstring.decode('utf-8'))
 
 
 def get_updates(token:str, offset=None, verbose=False):
