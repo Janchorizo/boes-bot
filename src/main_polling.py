@@ -13,16 +13,16 @@ from telegram import messages
 from handlers import handlers
 
 
-def handle_update(update, token):
+def handle_update(update, token, dburi, dbname):
     print(f'<- Update [{update.id}]')
 
     for handler in handlers:
         if handler.handles(update):
-            handler(update, token)
+            handler(update, token, dbname=dbname, dburi=dburi)
             break
     
 
-def main(token, **kwargs):
+def main(token, dburi, dbname, **kwargs):
     if token is None or len(token) == 0:
         raise ValueError('A valid Telegram bot token must be specified.')
 
@@ -38,7 +38,7 @@ def main(token, **kwargs):
     while not handle_break.called:
         status, updates = content.get_updates(token, offset)
         for update in updates:
-            handle_update(update, token)
+            handle_update(update, token, dburi, dbname)
             offset = update.id + 1
         time.sleep(.1)
         
@@ -52,9 +52,21 @@ def getOptions():
         type=str,
         help='Bot private token.')
 
+    parser.add_argument(
+        '--dburi',
+        type=str,
+        help='Public key')
+
+    parser.add_argument(
+        '--dbname',
+        type=str,
+        help='Private key')
+
     params = parser.parse_args()
     return {
         'token': params.token,
+        'dburi': params.dburi,
+        'dbname': params.dbname
     }
 
 
