@@ -34,6 +34,10 @@ async def get_body_dict(request):
 
 
 async def handle_query(request):
+    token = request.config_dict['token']
+    dbname = request.config_dict['dbname']
+    dburi = request.config_dict['dburi']
+
     print(f'<- {request.host}')
     body = await get_body_dict(request)
 
@@ -41,12 +45,11 @@ async def handle_query(request):
         print('{!r} [ERROR]'.format(request))
         raise web.HTTPNotFound()
 
-    token = request.config_dict['token']
     update = content.Update(body)
     for handler in handlers:
         if handler.handles(update):
             print(f'Request handled by {handler.__class__.__name__}')
-            handler(update, token)
+            handler(update, token, dbname=dbname, dburi=dburi)
             break
     return web.Response(text='ok')
     
@@ -55,16 +58,18 @@ async def healthy(request):
     return web.json_response({'healty': True})
 
 
-def init(token):
+def init(token, dburi, dbname):
     app = web.Application()
     app.add_routes([
         web.get('/healthy', healthy),
         web.post(f'/{token}', handle_query)])
     app['token'] = token
+    app['dburi'] = dburi
+    app['dbname'] = dbname
     return app
 
 
-def main(token, address, port, pubkey, privkey, **kwargs):
+def main(token, address, port, pubkey, privkey, dburi, dbname, **kwargs):
     if token is None or len(token) == 0:
         raise ValueError('A valid Telegram bot token must be specified.')
     if len(address) == 0:
@@ -72,7 +77,7 @@ def main(token, address, port, pubkey, privkey, **kwargs):
 
     with admin.Webhook(token, url=f'https://{address}/{token}', max_connections=MAX_CONNECTIONS,
             drop_pending_updates=True) as wb:
-        app = init(token)
+        app = init(token, dburi, dbname)
         web.run_app(app, port=port)
 
 
@@ -100,12 +105,12 @@ def getOptions(def_port):
         default=def_port)
 
     parser.add_argument(
-        '--pubkey',
+        '--dburi',
         type=str,
         help='Public key')
 
     parser.add_argument(
-        '--privkey',
+        '--dbname',
         type=str,
         help='Private key')
 
@@ -116,6 +121,8 @@ def getOptions(def_port):
         'port': params.port,
         'pubkey': params.pubkey,
         'privkey': params.privkey,
+        'dburi': params.dbui,
+        'dbname': params.dbname
     }
 
 
