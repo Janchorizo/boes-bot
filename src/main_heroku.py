@@ -43,7 +43,7 @@ async def handle_query(request):
     sftphost = request.config_dict['sftphost']
     sftpuser = request.config_dict['sftpuser']
     sftppass = request.config_dict['sftppass']
-    sftp_cnops = request.config_dict['sftp_cnops']
+    sftp_cnopts = request.config_dict['sftp_cnopts']
 
     print(f'<- {request.host}')
     body = await get_body_dict(request)
