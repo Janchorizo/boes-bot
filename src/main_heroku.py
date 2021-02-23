@@ -105,7 +105,7 @@ def main(
     if len(address) == 0:
         raise ValueError('Address must be specified.')
 
-    key = paramiko.RSAKey(data=decodebytes(sftpkeydata))
+    key = paramiko.RSAKey(data=decodebytes(sftpkeydata.encode()))
     cnopts = pysftp.CnOpts()
     sftp_cnopts.hostkeys.add(sftphost, 'ssh-rsa', key)
 
