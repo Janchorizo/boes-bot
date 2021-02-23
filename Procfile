@@ -1,1 +1,1 @@
-web: python src/main_heroku.py -t $BOT_TOKEN -p $PORT --address $ADDRESS
+web: python src/main_heroku.py -t $BOT_TOKEN -p $PORT --address $ADDRESS --sftpuser $SFTP_USER --sftppass $SFTP_PASS --sftphost $SFTP_HOST
