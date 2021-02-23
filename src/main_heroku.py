@@ -5,6 +5,7 @@ import json
 import ssl
 import os
 
+import paramiko
 from aiohttp import web
 
 from telegram import admin

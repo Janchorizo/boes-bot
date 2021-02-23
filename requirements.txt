@@ -3,3 +3,4 @@ termcolor
 aiohttp
 pymongo
 pysftp
+paramiko
