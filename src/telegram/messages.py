@@ -42,7 +42,6 @@ class ParameterGroup:
     def _use(self, token, chat_id, verbose=False):
         params = {'chat_id':chat_id, **self.params}
         files = self.files
-        print(params, files)
         status, msg = self.method(token, params=params, files=files, verbose=verbose)
         return status, msg
 

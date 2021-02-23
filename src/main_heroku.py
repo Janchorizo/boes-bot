@@ -2,7 +2,6 @@
 import argparse
 import asyncio
 import json
-import locale
 import ssl
 import os
 
@@ -13,9 +12,6 @@ from telegram import content
 from telegram import types
 from telegram import messages
 from handlers import handlers
-
-
-locale.setlocale(locale.LC_ALL,"es_ES.UTF-8")
 
 
 MAX_CONNECTIONS = 10
@@ -66,7 +62,6 @@ async def handle_query(request):
                         sftppass=sftppass)
             except Exception as e:
                 print(f'ERROR: {e}')
-                raise e
             break
     return web.Response(text='ok')
     
