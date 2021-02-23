@@ -155,7 +155,7 @@ def getOptions(def_port):
         'token': params.token,
         'address': params.address,
         'port': params.port,
-        'dburi': params.dbui,
+        'dburi': params.dburi,
         'dbname': params.dbname,
         'sftphost': params.sftphost,
         'sftpuser': params.sftpuser,
