@@ -1,6 +1,7 @@
 '''Telegram bot implementation for BOE information retrieval.'''
 import argparse
 import asyncio
+from base64 import decodebytes
 import json
 import ssl
 import os
