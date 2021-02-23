@@ -107,7 +107,7 @@ def main(
         raise ValueError('Address must be specified.')
 
     key = paramiko.RSAKey(data=decodebytes(sftpkeydata.encode()))
-    cnopts = pysftp.CnOpts()
+    sftp_cnopts = pysftp.CnOpts()
     sftp_cnopts.hostkeys.add(sftphost, 'ssh-rsa', key)
 
     with admin.Webhook(token, url=f'https://{address}/{token}', max_connections=MAX_CONNECTIONS,
