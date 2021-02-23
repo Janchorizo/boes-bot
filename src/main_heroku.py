@@ -97,7 +97,6 @@ def main(
         sftpuser,
         sftppass,
         sftpkeydata,
-        sftpkeydata,
         **kwargs):
     if token is None or len(token) == 0:
         raise ValueError('A valid Telegram bot token must be specified.')
