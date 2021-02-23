@@ -5,6 +5,7 @@ import locale
 import json
 
 import pymongo
+import pysftp
 from pymongo import MongoClient
 
 from telegram import messages
@@ -28,7 +29,7 @@ class DayHandler:
             return True
         return False
 
-    def __call__(self, update, token, dbname, dburi):
+    def __call__(self, update, token, dbname, dburi, sftphost, sftpuser, sftppass):
         year, month, day = update.content['data'].split(':')[1:]
         year, month, day = int(year), int(month), int(day)
         date = datetime.datetime(year, month, day)
@@ -37,8 +38,9 @@ class DayHandler:
         client = MongoClient(dburi)
         db = client[dbname]
         summary = db[self.collection].find_one({'date': formatted_date})
-        client.close()
+        
         if summary == None:
+            client.close()
             return
         
         formatted_link = summary["link"]\
@@ -60,13 +62,49 @@ class DayHandler:
             f'{formatted_entry_types}'
         )
 
-        print(caption)
-        msg = messages.CaptionReplacementContent(
-            message_id=update.content['message']['message_id'],
-            caption=caption,
-            parse_mode='MarkdownV2',
-            reply_markup='')
-        msg.apply(token, update.content.cid, verbose=True)
+        if summary['summary_graphic']['telegram_id'] != '':
+            msg = messages.PhotoReplacementContent(
+                message_id=update.content['message']['message_id'],
+                reply_markup='{}',
+                media={
+                    'content': summary['summary_graphic']['telegram_id'],
+                    'caption': caption,
+                    'parse_mode': 'MarkdownV2',
+                    'reply_markup': ''
+                })
+            msg.apply(token, update.content.cid, verbose=True)
+        else:
+            local_path = os.path.basename(summary['summary_graphic']['sftp_file'])
+            if not os.path.exists(local_path):
+                with pysftp.Connection(
+                        sftphost,
+                        username=sftpuser,
+                        password=sftppass) as sftp:
+                    sftp.get(
+                        summary['summary_graphic']['sftp_file'],
+                        local_path)
+            with open(local_path, 'rb') as f:
+                msg = messages.PhotoReplacementContent(
+                    message_id=update.content['message']['message_id'],
+                    reply_markup='{}',
+                    media={
+                        'content': f,
+                        'caption': caption,
+                        'parse_mode': 'MarkdownV2',
+                        'reply_markup': ''
+                    })
+                status, res = msg.apply(token, update.content.cid, verbose=True)
+            
+            if status == 200 and res['ok'] == True:
+                photo, thumbnail = res['result']['photo'][-2:]
+                photo_id = photo['file_id']
+                result = db[self.collection].update_one(
+                    {'date': formatted_date},
+                    {'$set': {'summary_graphic.telegram_id': photo_id}}
+                )
+                client.close()
+                if result.modified_count == 1:
+                    os.remove(local_path)
 
 
 def get_arranged_buttons(year, month, fmt, fallback):
@@ -98,7 +136,7 @@ class DayInputHandler:
             return True
         return False
 
-    def __call__(self, update, token, dbname, dburi):
+    def __call__(self, update, token, dbname, dburi, sftphost, sftpuser, sftppass):
         fields = update.content['data'].split(':')
         field_count = len(fields) - 1
         year = None if field_count == 0 else int(fields[1])
@@ -156,7 +194,7 @@ class SearchHandler:
             return True
         return False
 
-    def __call__(self, update, token, dbname, dburi):
+    def __call__(self, update, token, dbname, dburi, sftphost, sftpuser, sftppass):
         search_string = update.content["text"].split('/buscar')[1].strip()
         msg = messages.MessageContent(
             text=f'_Buscando_ {search_string} \\. \\. \\.',
@@ -177,7 +215,7 @@ class SuscriptionHandler:
             return True
         return False
     
-    def __call__(self, update, token, dbname, dburi):
+    def __call__(self, update, token, dbname, dburi, sftphost, sftpuser, sftppass):
         if (update.type == types.CallbackQuery):
             msg = messages.CaptionReplacementContent(
                 message_id=update.content['message']['message_id'],
@@ -219,7 +257,7 @@ class HelpHandler:
                 return True
         return False
     
-    def __call__(self, update, token, dbname, dburi):
+    def __call__(self, update, token, dbname, dburi, sftphost, sftpuser, sftppass):
         with open(os.path.join(basedir, 'static/header.png'), 'rb') as p:
             start_msg = messages.PhotoContent(
                 photo=p,
@@ -254,7 +292,7 @@ class MenuHandler:
                 return True
         return False
     
-    def __call__(self, update, token, dbname, dburi):
+    def __call__(self, update, token, dbname, dburi, sftphost, sftpuser, sftppass):
         client = MongoClient(dburi)
         db = client[dbname]
         cursor = db[self.collection].find({}, {'date': 1})\
