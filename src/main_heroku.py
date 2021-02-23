@@ -7,6 +7,7 @@ import ssl
 import os
 
 import paramiko
+import pysftp
 from aiohttp import web
 
 from telegram import admin
