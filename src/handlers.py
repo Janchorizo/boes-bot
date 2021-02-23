@@ -4,6 +4,10 @@ import datetime, calendar
 import locale
 import json
 
+import pymongo
+import pysftp
+from pymongo import MongoClient
+
 from telegram import messages
 from telegram import types
 from telegram import methods
@@ -16,6 +20,8 @@ basedir = os.path.dirname(os.path.abspath(__file__))
 
 
 class DayHandler:
+    collection = 'diary_summary'
+
     def handles(self, update):
         if update.type != types.CallbackQuery:
             return False
@@ -23,13 +29,82 @@ class DayHandler:
             return True
         return False
 
-    def __call__(self, update, token):
-        msg = messages.CaptionReplacementContent(
-            message_id=update.content['message']['message_id'],
-            caption='[TODO] ' + update.content['data'],
-            parse_mode='MarkdownV2',
-            reply_markup='')
-        msg.apply(token, update.content.cid, verbose=True)
+    def __call__(self, update, token, dbname, dburi, sftphost, sftpuser, sftppass):
+        year, month, day = update.content['data'].split(':')[1:]
+        year, month, day = int(year), int(month), int(day)
+        date = datetime.datetime(year, month, day)
+        formatted_date = '{:%Y-%m-%d}'.format(date)
+
+        client = MongoClient(dburi)
+        db = client[dbname]
+        summary = db[self.collection].find_one({'date': formatted_date})
+        
+        if summary == None:
+            client.close()
+            return
+        
+        formatted_link = summary["link"]\
+            .replace(".", "\\.")\
+            .replace('=', '\\=')\
+            .replace('-', '\\-')\
+            .replace('_', '\\_')
+        formatted_entry_types = '\n'.join(
+            f'◇ {c} entradas son {t}'
+            for t, c
+            in summary["per_type_def_count"].items()
+            if t != ''
+        )
+
+        caption = (
+            f'Boletín del día *{day} de {calendar.month_name[month].capitalize()}, {year}*\\.'
+            f'Accesible en {formatted_link}\\.\n\n'
+            f'Se registraron un total de {summary["entry_count"]} entradas, de las cuales:\n'
+            f'{formatted_entry_types}'
+        )
+
+        if summary['summary_graphic']['telegram_id'] != '':
+            msg = messages.PhotoReplacementContent(
+                message_id=update.content['message']['message_id'],
+                reply_markup='{}',
+                media={
+                    'content': summary['summary_graphic']['telegram_id'],
+                    'caption': caption,
+                    'parse_mode': 'MarkdownV2',
+                    'reply_markup': ''
+                })
+            msg.apply(token, update.content.cid, verbose=True)
+        else:
+            local_path = os.path.basename(summary['summary_graphic']['sftp_file'])
+            if not os.path.exists(local_path):
+                with pysftp.Connection(
+                        sftphost,
+                        username=sftpuser,
+                        password=sftppass) as sftp:
+                    sftp.get(
+                        summary['summary_graphic']['sftp_file'],
+                        local_path)
+            with open(local_path, 'rb') as f:
+                msg = messages.PhotoReplacementContent(
+                    message_id=update.content['message']['message_id'],
+                    reply_markup='{}',
+                    media={
+                        'content': f,
+                        'caption': caption,
+                        'parse_mode': 'MarkdownV2',
+                        'reply_markup': ''
+                    })
+                status, res = msg.apply(token, update.content.cid, verbose=True)
+            
+            if status == 200 and res['ok'] == True:
+                photo, thumbnail = res['result']['photo'][-2:]
+                photo_id = photo['file_id']
+                result = db[self.collection].update_one(
+                    {'date': formatted_date},
+                    {'$set': {'summary_graphic.telegram_id': photo_id}}
+                )
+                client.close()
+                if result.modified_count == 1:
+                    os.remove(local_path)
 
 
 def get_arranged_buttons(year, month, fmt, fallback):
@@ -61,7 +136,7 @@ class DayInputHandler:
             return True
         return False
 
-    def __call__(self, update, token):
+    def __call__(self, update, token, dbname, dburi, sftphost, sftpuser, sftppass):
         fields = update.content['data'].split(':')
         field_count = len(fields) - 1
         year = None if field_count == 0 else int(fields[1])
@@ -119,7 +194,7 @@ class SearchHandler:
             return True
         return False
 
-    def __call__(self, update, token):
+    def __call__(self, update, token, dbname, dburi, sftphost, sftpuser, sftppass):
         search_string = update.content["text"].split('/buscar')[1].strip()
         msg = messages.MessageContent(
             text=f'_Buscando_ {search_string} \\. \\. \\.',
@@ -140,7 +215,7 @@ class SuscriptionHandler:
             return True
         return False
     
-    def __call__(self, update, token):
+    def __call__(self, update, token, dbname, dburi, sftphost, sftpuser, sftppass):
         if (update.type == types.CallbackQuery):
             msg = messages.CaptionReplacementContent(
                 message_id=update.content['message']['message_id'],
@@ -182,7 +257,7 @@ class HelpHandler:
                 return True
         return False
     
-    def __call__(self, update, token):
+    def __call__(self, update, token, dbname, dburi, sftphost, sftpuser, sftppass):
         with open(os.path.join(basedir, 'static/header.png'), 'rb') as p:
             start_msg = messages.PhotoContent(
                 photo=p,
@@ -200,8 +275,8 @@ menu_text = (
 )
 
 
-menu_options = json.dumps({'inline_keyboard': [
-    [{'text': 'Ver el último BOE', 'callback_data': DayHandler.__name__}],
+menu_options = lambda last_day: json.dumps({'inline_keyboard': [
+    [{'text': f'Ver el último BOE ({last_day:%d/%m/%Y})', 'callback_data': f'{DayHandler.__name__}:{last_day:%Y:%m:%d}'}],
     [{'text': 'Ver otro día', 'callback_data': DayInputHandler.__name__}],
     [{'text': 'Buscar en el BOE', 'switch_inline_query_current_chat': '/buscar '}],
     [{'text': 'Suscribirse al BOE', 'callback_data': SuscriptionHandler.__name__}],
@@ -209,19 +284,32 @@ menu_options = json.dumps({'inline_keyboard': [
 
 
 class MenuHandler:
+    collection = 'diary_summary'
+
     def handles(self, update):
         if update.type == types.Message:
             if update.content.is_command('/menu') or update.content.mentions('@boes_bot'):
                 return True
         return False
     
-    def __call__(self, update, token):
+    def __call__(self, update, token, dbname, dburi, sftphost, sftpuser, sftppass):
+        client = MongoClient(dburi)
+        db = client[dbname]
+        cursor = db[self.collection].find({}, {'date': 1})\
+            .sort([('date', pymongo.DESCENDING)])\
+            .limit(1)
+        
+        year, month, day = next(cursor)['date'].split('-')
+        year, month, day = int(year), int(month), int(day)
+        last_day = datetime.datetime(year, month, day)
+        client.close()
+
         with open(os.path.join(basedir, 'static/header.png'), 'rb') as p:
             start_msg = messages.PhotoContent(
                 photo=p,
                 parse_mode='MarkdownV2',
                 caption=menu_text,
-                reply_markup=menu_options)
+                reply_markup=menu_options(last_day))
             start_msg.send(token, update.content.cid, verbose=True)
 
 

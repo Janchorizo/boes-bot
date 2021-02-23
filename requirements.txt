@@ -1,3 +1,5 @@
 requests
 termcolor
 aiohttp
+pymongo
+pysftp
