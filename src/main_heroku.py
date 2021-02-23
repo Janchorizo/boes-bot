@@ -66,6 +66,7 @@ async def handle_query(request):
                         sftppass=sftppass)
             except Exception as e:
                 print(f'ERROR: {e}')
+                raise e
             break
     return web.Response(text='ok')
     
