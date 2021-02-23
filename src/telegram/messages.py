@@ -3,6 +3,7 @@
 Sending messages is intended to be done by instantiating one
 of the content types and use the instance method.
 '''
+import os
 import json
 import functools
 from . import methods
@@ -41,6 +42,7 @@ class ParameterGroup:
     def _use(self, token, chat_id, verbose=False):
         params = {'chat_id':chat_id, **self.params}
         files = self.files
+        print(params, files)
         status, msg = self.method(token, params=params, files=files, verbose=verbose)
         return status, msg
 
@@ -232,7 +234,37 @@ class MediaReplacementContent(ReplacementContent):
     # InputMediaPhoto
     # InputMediaVideo
     method = methods.editMessageMedia
+    type_ = 'document'
 
+    @property
+    def params(self):
+        params_copy = dict(self._params)
+
+        media = {
+            k: v 
+            for k,v
+            in params_copy['media'].items()
+            if k != 'content'
+        }
+        media['type'] = self.type_
+
+        if hasattr(params_copy['media']['content'], 'read'):            
+            media['media'] = f'attach://{self._params["media"]["content"].name}'
+        else:
+            media['media'] = params_copy['media']['content']
+
+        params_copy['media'] = json.dumps(media)
+        return params_copy
+
+    @property
+    def files(self):
+        if hasattr(self._params['media']['content'], 'read'):
+            return {self._params['media']['content'].name:
+                (self._params['media']['content'].name, self._params['media']['content'])}
+        return None
+
+class PhotoReplacementContent(MediaReplacementContent):
+    type_ = 'photo'
 
 class MarkupReplacementContent(ReplacementContent):
     method = methods.editMessageReplyMarkup
