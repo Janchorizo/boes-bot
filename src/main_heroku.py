@@ -40,6 +40,7 @@ async def handle_query(request):
     sftphost = request.config_dict['sftphost']
     sftpuser = request.config_dict['sftpuser']
     sftppass = request.config_dict['sftppass']
+    sftp_cnops = request.config_dict['sftp_cnops']
 
     print(f'<- {request.host}')
     body = await get_body_dict(request)
@@ -59,7 +60,8 @@ async def handle_query(request):
                         dburi=dburi,
                         sftphost=sftphost,
                         sftpuser=sftpuser,
-                        sftppass=sftppass)
+                        sftppass=sftppass
+                        sftp_cnopts=sftp_cnopts)
             except Exception as e:
                 print(f'ERROR: {e}')
             break
@@ -70,7 +72,7 @@ async def healthy(request):
     return web.json_response({'healty': True})
 
 
-def init(token, dburi, dbname, sftphost, sftpuser, sftppass):
+def init(token, dburi, dbname, sftphost, sftpuser, sftppass, sftp_cnopts):
     app = web.Application()
     app.add_routes([
         web.get('/healthy', healthy),
@@ -81,6 +83,7 @@ def init(token, dburi, dbname, sftphost, sftpuser, sftppass):
     app['sftphost'] = sftphost
     app['sftpuser'] = sftpuser
     app['sftppass'] = sftppass
+    app['sftp_cnopts'] = sftp_cnopts
     return app
 
 
@@ -93,15 +96,21 @@ def main(
         sftphost,
         sftpuser,
         sftppass,
+        sftpkeydata,
+        sftpkeydata,
         **kwargs):
     if token is None or len(token) == 0:
         raise ValueError('A valid Telegram bot token must be specified.')
     if len(address) == 0:
         raise ValueError('Address must be specified.')
 
+    key = paramiko.RSAKey(data=decodebytes(sftpkeydata))
+    cnopts = pysftp.CnOpts()
+    sftp_cnopts.hostkeys.add(sftphost, 'ssh-rsa', key)
+
     with admin.Webhook(token, url=f'https://{address}/{token}', max_connections=MAX_CONNECTIONS,
             drop_pending_updates=True) as wb:
-        app = init(token, dburi, dbname, sftphost, sftpuser, sftppass)
+        app = init(token, dburi, dbname, sftphost, sftpuser, sftppass, sftp_cnopts)
         web.run_app(app, port=port)
 
 
@@ -153,6 +162,11 @@ def getOptions(def_port):
         type=str,
         help='Private key')
 
+    parser.add_argument(
+        '--sftpkeydata',
+        type=str,
+        help='Private key')
+
     params = parser.parse_args()
     return {
         'token': params.token,
@@ -163,6 +177,7 @@ def getOptions(def_port):
         'sftphost': params.sftphost,
         'sftpuser': params.sftpuser,
         'sftppass': params.sftppass,
+        'sftpkeydata': params.sftpkeydata
     }
 
 

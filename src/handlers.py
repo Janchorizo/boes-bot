@@ -29,7 +29,7 @@ class DayHandler:
             return True
         return False
 
-    def __call__(self, update, token, dbname, dburi, sftphost, sftpuser, sftppass):
+    def __call__(self, update, token, dbname, dburi, sftphost, sftpuser, sftppass, sftp_cnops=None):
         year, month, day = update.content['data'].split(':')[1:]
         year, month, day = int(year), int(month), int(day)
         date = datetime.datetime(year, month, day)
@@ -79,7 +79,8 @@ class DayHandler:
                 with pysftp.Connection(
                         sftphost,
                         username=sftpuser,
-                        password=sftppass) as sftp:
+                        password=sftppass,
+                        cnops=sftp_cnops) as sftp:
                     sftp.get(
                         summary['summary_graphic']['sftp_file'],
                         local_path)
@@ -136,7 +137,7 @@ class DayInputHandler:
             return True
         return False
 
-    def __call__(self, update, token, dbname, dburi, sftphost, sftpuser, sftppass):
+    def __call__(self, update, token, dbname, dburi, sftphost, sftpuser, sftppass, sftp_cnops=None):
         fields = update.content['data'].split(':')
         field_count = len(fields) - 1
         year = None if field_count == 0 else int(fields[1])
@@ -194,7 +195,7 @@ class SearchHandler:
             return True
         return False
 
-    def __call__(self, update, token, dbname, dburi, sftphost, sftpuser, sftppass):
+    def __call__(self, update, token, dbname, dburi, sftphost, sftpuser, sftppass, sftp_cnops=None):
         search_string = update.content["text"].split('/buscar')[1].strip()
         msg = messages.MessageContent(
             text=f'_Buscando_ {search_string} \\. \\. \\.',
@@ -215,7 +216,7 @@ class SuscriptionHandler:
             return True
         return False
     
-    def __call__(self, update, token, dbname, dburi, sftphost, sftpuser, sftppass):
+    def __call__(self, update, token, dbname, dburi, sftphost, sftpuser, sftppass, sftp_cnops=None):
         if (update.type == types.CallbackQuery):
             msg = messages.CaptionReplacementContent(
                 message_id=update.content['message']['message_id'],
@@ -257,7 +258,7 @@ class HelpHandler:
                 return True
         return False
     
-    def __call__(self, update, token, dbname, dburi, sftphost, sftpuser, sftppass):
+    def __call__(self, update, token, dbname, dburi, sftphost, sftpuser, sftppass, sftp_cnops=None):
         with open(os.path.join(basedir, 'static/header.png'), 'rb') as p:
             start_msg = messages.PhotoContent(
                 photo=p,
@@ -292,7 +293,7 @@ class MenuHandler:
                 return True
         return False
     
-    def __call__(self, update, token, dbname, dburi, sftphost, sftpuser, sftppass):
+    def __call__(self, update, token, dbname, dburi, sftphost, sftpuser, sftppass, sftp_cnops=None):
         client = MongoClient(dburi)
         db = client[dbname]
         cursor = db[self.collection].find({}, {'date': 1})\
