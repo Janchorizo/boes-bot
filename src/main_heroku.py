@@ -60,7 +60,7 @@ async def handle_query(request):
                         dburi=dburi,
                         sftphost=sftphost,
                         sftpuser=sftpuser,
-                        sftppass=sftppass
+                        sftppass=sftppass,
                         sftp_cnopts=sftp_cnopts)
             except Exception as e:
                 print(f'ERROR: {e}')
