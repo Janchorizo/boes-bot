@@ -13,16 +13,25 @@ from telegram import messages
 from handlers import handlers
 
 
-def handle_update(update, token, dburi, dbname):
+def handle_update(update, token, dburi, dbname, sftphost, sftpuser, sftppass):
     print(f'<- Update [{update.id}]')
 
     for handler in handlers:
         if handler.handles(update):
-            handler(update, token, dbname=dbname, dburi=dburi)
+            try:
+                handler(update,
+                        token,
+                        dbname=dbname,
+                        dburi=dburi,
+                        sftphost=sftphost,
+                        sftpuser=sftpuser,
+                        sftppass=sftppass)
+            except Exception as e:
+                print(f'ERROR: {e}')
             break
     
 
-def main(token, dburi, dbname, **kwargs):
+def main(token, dburi, dbname, sftphost, sftpuser, sftppass, **kwargs):
     if token is None or len(token) == 0:
         raise ValueError('A valid Telegram bot token must be specified.')
 
@@ -38,7 +47,7 @@ def main(token, dburi, dbname, **kwargs):
     while not handle_break.called:
         status, updates = content.get_updates(token, offset)
         for update in updates:
-            handle_update(update, token, dburi, dbname)
+            handle_update(update, token, dburi, dbname, sftphost, sftpuser, sftppass)
             offset = update.id + 1
         time.sleep(.1)
         
@@ -62,11 +71,29 @@ def getOptions():
         type=str,
         help='Private key')
 
+    parser.add_argument(
+        '--sftpuser',
+        type=str,
+        help='Public key')
+
+    parser.add_argument(
+        '--sftppass',
+        type=str,
+        help='Private key')
+
+    parser.add_argument(
+        '--sftphost',
+        type=str,
+        help='Private key')
+
     params = parser.parse_args()
     return {
         'token': params.token,
         'dburi': params.dburi,
-        'dbname': params.dbname
+        'dbname': params.dbname,
+        'sftphost': params.sftphost,
+        'sftpuser': params.sftpuser,
+        'sftppass': params.sftppass,
     }
 
 
