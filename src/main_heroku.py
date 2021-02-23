@@ -37,6 +37,9 @@ async def handle_query(request):
     token = request.config_dict['token']
     dbname = request.config_dict['dbname']
     dburi = request.config_dict['dburi']
+    sftphost = request.config_dict['sftphost']
+    sftpuser = request.config_dict['sftpuser']
+    sftppass = request.config_dict['sftppass']
 
     print(f'<- {request.host}')
     body = await get_body_dict(request)
