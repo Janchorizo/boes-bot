@@ -11,7 +11,6 @@ from pymongo import MongoClient
 from telegram import messages
 from telegram import types
 from telegram import methods
-from handlers.section_handler import SectionHandler
 
 
 locale.setlocale(locale.LC_ALL,"es_ES.UTF-8")
@@ -21,17 +20,17 @@ basedir = os.path.realpath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 )
 
-def create_menu_options(day, month, year, entry_count_per_section):
+def create_menu_options(day, month, year):
     options = [
         [{
-            'text': f'{section.capitalize()} ({count})',
-            'callback_data': f'{SectionHandler.__name__}:{year}:{month}:{day}:{section}'
-        }] for section, count in entry_count_per_section.items()
+            'text': 'Volver al resumen del diario',
+            'callback_data': f'DayHandler:{year}:{month}:{day}'
+        }]
     ]
     return json.dumps({'inline_keyboard': options})
 
-class DayHandler:
-    collection = 'diary_summary'
+class SectionHandler:
+    collection = 'diary_section_summary'
 
     def handles(self, update):
         if update.type != types.CallbackQuery:
@@ -41,42 +40,28 @@ class DayHandler:
         return False
 
     def __call__(self, update, token, dbname, dburi, sftphost, sftpuser, sftppass, sftp_cnopts=None):
-        year, month, day = update.content['data'].split(':')[1:]
+        year, month, day, section = update.content['data'].split(':')[1:]
         year, month, day = int(year), int(month), int(day)
         date = datetime.datetime(year, month, day)
         formatted_date = '{:%Y-%m-%d}'.format(date)
 
         client = MongoClient(dburi)
         db = client[dbname]
-        summary = db[self.collection].find_one({'date': formatted_date})
+        summary = db[self.collection].find_one({'date': formatted_date, 'section': section})
         
         if summary == None:
             client.close()
             return
         
-        formatted_link = summary["link"]\
-            .replace(".", "\\.")\
-            .replace('=', '\\=')\
-            .replace('-', '\\-')\
-            .replace('_', '\\_')
-        formatted_entry_types = '\n'.join(
-            f'◇ {c} entradas son {t}'
-            for t, c
-            in summary["per_type_def_count"].items()
-            if t != ''
-        )
-
         caption = (
-            f'Boletín del día *{day} de {calendar.month_name[month].capitalize()}, {year}*\\.'
-            f'Accesible en {formatted_link}\\.\n\n'
-            f'Se registraron un total de {summary["entry_count"]} entradas, de las cuales:\n'
-            f'{formatted_entry_types}'
+            f'Se registraron un total de {summary["entry_count"]} en la sección "{section}" del'
+            f' Boletín del día *{day} de {calendar.month_name[month].capitalize()}, {year}*\\.'
         )
 
         if summary['summary_graphic']['telegram_id'] != '':
             msg = messages.PhotoReplacementContent(
                 message_id=update.content['message']['message_id'],
-                reply_markup=create_menu_options(day, month, year, summary['sections']),
+                reply_markup=create_menu_options(day, month, year),
                 media={
                     'content': summary['summary_graphic']['telegram_id'],
                     'caption': caption,
@@ -97,12 +82,11 @@ class DayHandler:
             with open(local_path, 'rb') as f:
                 msg = messages.PhotoReplacementContent(
                     message_id=update.content['message']['message_id'],
-                    reply_markup='{}',
+                    reply_markup=create_menu_options(day, month, year),
                     media={
                         'content': f,
                         'caption': caption,
                         'parse_mode': 'MarkdownV2',
-                        'reply_markup': create_menu_options(day, month, year, summary['sections'])
                     })
                 status, res = msg.apply(token, update.content.cid, verbose=True)
             
@@ -116,3 +100,4 @@ class DayHandler:
                 client.close()
                 if result.modified_count == 1:
                     os.remove(local_path)
+

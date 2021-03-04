@@ -4,6 +4,7 @@ from .search_handler import SearchHandler
 from .suscription_handler import SuscriptionHandler
 from .menu_handler import MenuHandler
 from .help_handler import HelpHandler
+from .section_handler import SectionHandler
 
 handlers = [
     DayHandler(),
@@ -12,4 +13,5 @@ handlers = [
     SuscriptionHandler(),
     MenuHandler(),
     HelpHandler(),
+    SectionHandler()
 ]
